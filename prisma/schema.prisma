@@ -8,26 +8,35 @@ datasource db {
 }
 
 model User {
-  id       String   @id @default(cuid())
-  name     String
-  email    String   @unique
-  password String
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
   createdAt DateTime @default(now())
-  recipes  Recipe[]
+  recipes   Recipe[]
 }
 
+// Ключевая сущность: Category
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  recipes Recipe[]
+}
+
+// Ключевая сущность: Recipe
 model Recipe {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String
-  category    String
   imageUrl    String
   cookTime    Int
   servings    Int
   difficulty  String
-  ingredients String   // JSON
-  steps       String   // JSON
-  createdAt   DateTime @default(now())
+  ingredients String // текст / JSON
+  steps       String // JSON
+  createdAt   DateTime  @default(now())
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
   authorId    String?
-  author      User?    @relation(fields: [authorId], references: [id])
+  author      User?     @relation(fields: [authorId], references: [id])
 }

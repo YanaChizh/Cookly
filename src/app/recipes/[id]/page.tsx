@@ -11,13 +11,14 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function RecipePage({ params }: Props) {
   const { id } = await params;
-  const recipe = await prisma.recipe.findUnique({ where: { id } });
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    include: { category: true },
+  });
   if (!recipe) notFound();
 
   const session = await getSession();
-  // Показываем кнопку удаления, если пользователь вошёл
-  // и рецепт либо его, либо стартовый (без автора)
-  const canDelete =
+  const canEdit =
     session && (!recipe.authorId || recipe.authorId === session.id);
 
   const ingredients: string[] = JSON.parse(recipe.ingredients);
@@ -25,11 +26,21 @@ export default async function RecipePage({ params }: Props) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <Link href="/" className="text-sage-600 text-sm hover:underline">
           ← Назад
         </Link>
-        {canDelete && <DeleteButton id={recipe.id} />}
+        {canEdit && (
+          <div className="flex gap-2">
+            <Link
+              href={`/recipes/${recipe.id}/edit`}
+              className="px-3 py-1.5 text-sm rounded-lg border border-sage-200 text-sage-700 hover:bg-sage-50"
+            >
+              Редактировать
+            </Link>
+            <DeleteButton id={recipe.id} />
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl overflow-hidden shadow border border-cream-200">
@@ -47,7 +58,7 @@ export default async function RecipePage({ params }: Props) {
         <div className="p-6">
           <div className="flex flex-wrap gap-2 mb-3">
             <span className="text-xs bg-sage-100 text-sage-700 px-2.5 py-1 rounded-full">
-              {recipe.category}
+              {recipe.category.name}
             </span>
             <span className="text-xs bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-full">
               {recipe.difficulty}

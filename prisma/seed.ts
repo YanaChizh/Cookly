@@ -1,11 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
-const recipes = [
+const categoryNames = [
+  "Завтраки",
+  "Основные блюда",
+  "Супы",
+  "Салаты",
+  "Десерты",
+  "Напитки",
+];
+
+const recipesData = [
   {
     title: "Пышные блины с мёдом",
     description: "Классические воздушные блины. Идеальный завтрак.",
-    category: "Завтраки",
+    categoryName: "Завтраки",
     imageUrl: "/images/pancakes.jpg",
     cookTime: 30,
     servings: 4,
@@ -16,7 +25,7 @@ const recipes = [
   {
     title: "Сырники",
     description: "Нежные творожные сырники с хрустящей корочкой.",
-    category: "Завтраки",
+    categoryName: "Завтраки",
     imageUrl: "/images/syrniki.jpg",
     cookTime: 25,
     servings: 3,
@@ -27,7 +36,7 @@ const recipes = [
   {
     title: "Паста с томатным соусом",
     description: "Простая паста в ароматном томатном соусе.",
-    category: "Основные блюда",
+    categoryName: "Основные блюда",
     imageUrl: "/images/pasta.jpg",
     cookTime: 25,
     servings: 2,
@@ -38,7 +47,7 @@ const recipes = [
   {
     title: "Овощной крем-суп",
     description: "Нежный суп-пюре из овощей.",
-    category: "Супы",
+    categoryName: "Супы",
     imageUrl: "/images/soup.jpg",
     cookTime: 40,
     servings: 4,
@@ -49,7 +58,7 @@ const recipes = [
   {
     title: "Ягодный десерт",
     description: "Лёгкий десерт с творожным кремом и ягодами.",
-    category: "Десерты",
+    categoryName: "Десерты",
     imageUrl: "/images/berry-dessert.jpg",
     cookTime: 20,
     servings: 4,
@@ -60,7 +69,7 @@ const recipes = [
   {
     title: "Овощной салат",
     description: "Свежий хрустящий салат.",
-    category: "Салаты",
+    categoryName: "Салаты",
     imageUrl: "/images/salad.jpg",
     cookTime: 15,
     servings: 3,
@@ -71,7 +80,7 @@ const recipes = [
   {
     title: "Домашний лимонад",
     description: "Освежающий лимонад с мятой и лимоном. Идеально в жару.",
-    category: "Напитки",
+    categoryName: "Напитки",
     imageUrl: "/images/lemonade.jpg",
     cookTime: 10,
     servings: 4,
@@ -82,7 +91,7 @@ const recipes = [
   {
     title: "Ягодный смузи",
     description: "Густой смузи из ягод и банана. Быстрый и полезный напиток.",
-    category: "Напитки",
+    categoryName: "Напитки",
     imageUrl: "/images/smoothie.jpg",
     cookTime: 5,
     servings: 2,
@@ -93,13 +102,38 @@ const recipes = [
 ];
 
 async function main() {
-  const count = await prisma.recipe.count();
-  if (count > 0) {
+  const recipeCount = await prisma.recipe.count();
+  if (recipeCount > 0) {
     console.log("Рецепты уже есть, пропускаем.");
     return;
   }
-  for (const r of recipes) {
-    await prisma.recipe.create({ data: r });
+
+  for (const name of categoryNames) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
+  console.log("Категории созданы.");
+
+  const categories = await prisma.category.findMany();
+  const byName = Object.fromEntries(categories.map((c) => [c.name, c.id]));
+
+  for (const r of recipesData) {
+    await prisma.recipe.create({
+      data: {
+        title: r.title,
+        description: r.description,
+        imageUrl: r.imageUrl,
+        cookTime: r.cookTime,
+        servings: r.servings,
+        difficulty: r.difficulty,
+        ingredients: r.ingredients,
+        steps: r.steps,
+        categoryId: byName[r.categoryName],
+      },
+    });
   }
   console.log("Добавлено 8 рецептов.");
 }

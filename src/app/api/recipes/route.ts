@@ -5,13 +5,20 @@ import { getSession } from "@/lib/auth";
 export async function GET(req: NextRequest) {
   try {
     const category = req.nextUrl.searchParams.get("category");
+
     const recipes = await prisma.recipe.findMany({
-      where: category && category !== "Все" ? { category } : undefined,
+      where:
+        category && category !== "Все"
+          ? { category: { name: category } }
+          : undefined,
       orderBy: { createdAt: "desc" },
+      include: { category: true },
     });
+
     return NextResponse.json(
       recipes.map((r) => ({
         ...r,
+        category: r.category.name,
         ingredients: JSON.parse(r.ingredients),
         steps: JSON.parse(r.steps),
       }))
@@ -49,17 +56,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    let cat = await prisma.category.findUnique({ where: { name: category } });
+    if (!cat) {
+      cat = await prisma.category.create({ data: { name: category } });
+    }
+
     const recipe = await prisma.recipe.create({
       data: {
         title: String(title).trim(),
         description: String(description).trim(),
-        category: String(category),
         imageUrl: imageUrl?.trim() || "/images/placeholder.jpg",
         cookTime: Number(cookTime) || 30,
         servings: Number(servings) || 2,
         difficulty: difficulty || "Легко",
         ingredients: JSON.stringify(ingredients),
         steps: JSON.stringify(steps),
+        categoryId: cat.id,
         authorId: session.id,
       },
     });
@@ -68,7 +80,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error("Create recipe error:", e);
     return NextResponse.json(
-      { error: "Ошибка при сохранении рецепта. Проверьте базу данных." },
+      { error: "Ошибка при сохранении рецепта" },
       { status: 500 }
     );
   }

@@ -1,4 +1,5 @@
-# Cookly
+ ```markdown 
+  # Cookly
 
 Веб-приложение для просмотра, фильтрации и добавления кулинарных рецептов с личным кабинетом пользователя.
 
@@ -51,3 +52,4 @@ npx prisma db push
 npx tsx prisma/seed.ts
 
 npm run dev
+```

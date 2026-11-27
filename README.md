@@ -25,7 +25,7 @@
 ** Клонировать репозиторий**
 
 ```bash
-git clone <ссылка-на-репозиторий>
+git clone <https://github.com/YanaChizh/Cookly>
 cd Cookly
 ```
 
